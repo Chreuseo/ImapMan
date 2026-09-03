@@ -1,0 +1,61 @@
+openapi: 3.0.3
+info:
+  title: ImapMan API
+  version: 1.0.0
+  description: API for configuring mailbox-to-distributor forwarding.
+servers:
+  - url: /api/v1
+security:
+  - BearerAuth: []
+paths:
+  /mailboxes:
+    get: {summary: List mailboxes, responses: {'200': {description: OK}}}
+    post: {summary: Create mailbox including its IMAP settings and optional SMTP override, requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/Mailbox'}}}}, responses: {'201': {description: Created}}}
+  /mailboxes/{mailboxID}:
+    delete: {summary: Delete mailbox and its assignments and processing state, responses: {'204': {description: Removed}}}
+  /distributors:
+    get: {summary: List distributors, responses: {'200': {description: OK}}}
+    post: {summary: Create distributor, requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/Distributor'}}}}, responses: {'201': {description: Created}}}
+  /distributors/{distributorID}:
+    put: {summary: Update distributor name and sender policy, requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/Distributor'}}}}, responses: {'200': {description: Updated}}}
+    delete: {summary: Delete distributor and its list assignments, responses: {'204': {description: Removed}}}
+  /mailboxes/{mailboxID}/distributor/{distributorID}:
+    put: {summary: Assign the one distributor for a mailbox, responses: {'204': {description: Assigned}}}
+    delete: {summary: Remove mailbox distributor assignment, responses: {'204': {description: Removed}}}
+  /data-sources:
+    get: {summary: List database connections without DSNs, responses: {'200': {description: OK}}}
+    post: {summary: Create database connection, requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/DataSource'}}}}, responses: {'201': {description: Created}}}
+  /data-sources/{dataSourceID}:
+    delete: {summary: Delete an unreferenced database connection, responses: {'204': {description: Removed}}}
+  /lists:
+    get: {summary: List mailing lists, responses: {'200': {description: OK}}}
+    post: {summary: Create static or database-backed list, requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/MailingList'}}}}, responses: {'201': {description: Created}}}
+  /lists/{listID}:
+    delete: {summary: Delete list, members, and all assignments, responses: {'204': {description: Removed}}}
+  /distributors/{distributorID}/lists/{listID}:
+    put: {summary: Add a list to distributor, responses: {'204': {description: Added}}}
+    delete: {summary: Remove a list from distributor, responses: {'204': {description: Removed}}}
+  /distributors/{distributorID}/sender-lists/{listID}:
+    put: {summary: Link a static or database list used by whitelist or blacklist, responses: {'204': {description: Added}}}
+    delete: {summary: Remove sender-list assignment, responses: {'204': {description: Removed}}}
+  /lists/{listID}/members:
+    get: {summary: List static list members, responses: {'200': {description: OK}}}
+    post: {summary: Add static list member, requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/Member'}}}}, responses: {'201': {description: Created}}}
+  /lists/{listID}/members/{memberID}:
+    delete: {summary: Remove one member from a static list, responses: {'204': {description: Removed}}}
+  /processed-messages:
+    get: {summary: List durable mail processing state, responses: {'200': {description: OK}}}
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API secret
+  schemas:
+    Mailbox: {type: object, required: [name, imap_host, imap_username, imap_password_env, imap_folder], properties: {name: {type: string}, imap_host: {type: string}, imap_port: {type: integer, default: 993}, imap_username: {type: string}, imap_password_env: {type: string}, imap_folder: {type: string}, imap_mark_seen: {type: boolean}, smtp_host: {type: string}, smtp_port: {type: integer}, smtp_username: {type: string}, smtp_password_env: {type: string}, smtp_from: {type: string, format: email}}}
+    Distributor: {type: object, required: [name, sender_policy], properties: {name: {type: string}, sender_policy: {enum: [allow_all, whitelist, blacklist, members_only]}}}
+    DataSource: {type: object, required: [name, driver, dsn], properties: {name: {type: string}, driver: {enum: [postgres, mysql, sqlite]}, dsn: {type: string, writeOnly: true}, username: {type: string}, password_env: {type: string}}}
+    MailingList: {type: object, required: [name, list_type], properties: {name: {type: string}, list_type: {enum: [static, database]}, datasource_id: {type: integer}, recipient_table: {type: string}, email_column: {type: string}, filter: {type: array, items: {$ref: '#/components/schemas/Condition'}}, delivery: {$ref: '#/components/schemas/Delivery'}}}
+    Delivery: {type: object, required: [batch_size, use_bcc, to_header, delay_seconds], properties: {batch_size: {type: integer, minimum: 1}, use_bcc: {type: boolean, description: 'False sends one recipient per message to preserve envelope-only addresses.'}, to_header: {enum: [from, undisclosed]}, delay_seconds: {type: integer, minimum: 0}}}
+    Condition: {type: object, required: [column, op, value], properties: {column: {type: string}, op: {enum: ['=', '!=', '<', '<=', '>', '>=', LIKE]}, value: {}}}
+    Member: {type: object, required: [name, email], properties: {name: {type: string}, email: {type: string, format: email}, receives_mail: {type: boolean}}}
