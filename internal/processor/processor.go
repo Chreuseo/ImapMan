@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Chreuseo/ImapMan/internal/config"
+	"github.com/Chreuseo/ImapMan/internal/store"
 	"github.com/emersion/go-imap"
 	imapclient "github.com/emersion/go-imap/client"
-	"github.com/imapman/imapman/internal/config"
-	"github.com/imapman/imapman/internal/store"
 )
 
 type Processor struct {

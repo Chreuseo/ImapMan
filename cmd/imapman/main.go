@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/imapman/imapman/internal/api"
-	"github.com/imapman/imapman/internal/config"
-	"github.com/imapman/imapman/internal/processor"
-	"github.com/imapman/imapman/internal/store"
+	"github.com/Chreuseo/ImapMan/internal/api"
+	"github.com/Chreuseo/ImapMan/internal/config"
+	"github.com/Chreuseo/ImapMan/internal/processor"
+	"github.com/Chreuseo/ImapMan/internal/store"
 )
 
 func main() {

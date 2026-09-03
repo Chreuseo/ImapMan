@@ -1,4 +1,4 @@
-module github.com/imapman/imapman
+module github.com/Chreuseo/ImapMan
 
 go 1.25
 
